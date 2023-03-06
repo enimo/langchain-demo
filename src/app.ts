@@ -9,7 +9,7 @@ import { OpenAI } from "langchain/llms";
 import { BufferWindowMemory } from "langchain/memory";
 import { ConversationChain } from "langchain/chains";
 
-const model = new OpenAI({});
+const model = new OpenAI(cache: true );
 const memory = new BufferWindowMemory({ k: 1 });
 const chain = new ConversationChain({ llm: model, memory: memory });
 
@@ -22,24 +22,47 @@ console.log({ res2 }); // {response: ' You said your name is Jim. Is there anyth
 */
 
 
-
+/*
 import { OpenAIChat } from "langchain/llms";
+import { LLMCallbackManager } from "langchain/llms";
+
+const callbackManager = {
+  handleStart: (..._args) => {
+    console.log(JSON.stringify(_args, null, 2));
+  },
+  handleEnd: (..._args) => {
+    console.log(JSON.stringify(_args, null, 2));
+  },
+  handleError: (..._args) => {
+    console.log(JSON.stringify(_args, null, 2));
+  },
+} as LLMCallbackManager;
+
+
 const model = new OpenAIChat({
+  openAIApiKey: process.env.OPENAI_API_KEY,
   modelName: "gpt-3.5-turbo",
+  // prefixMessages: history,
+  temperature: 0.7,
+  verbose: true,
+  // callbackManager: callbackManager,
   prefixMessages: [
     { role: "user", content: "My name is John" },
     { role: "assistant", content: "Hi there" },
   ],
 });
+
 const res = await model.call("What is my name");
+
 console.log({ res });
 
+*/
 
 
-/*
+
 
 //Import the OpenAPI Large Language Model (you can import other models here eg. Cohere)
-import { OpenAI } from "langchain/llms";
+import { OpenAI, OpenAIChat } from "langchain/llms";
 
 //Import the Vector DB QA chain
 import { VectorDBQAChain } from "langchain/chains";
@@ -60,24 +83,51 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import * as fs from "fs";
 
 
+import { TextLoader } from "langchain/document_loaders";
+import { PDFLoader } from "langchain/document_loaders";
+import { CheerioWebBaseLoader } from "langchain/document_loaders";
+
 
 export const run = async () => {
   //Instantiante the OpenAI LLM that will be used to answer the question
-  const model = new OpenAI({});
+  // const model = new OpenAI({ cache: true });
+  const model = new OpenAIChat({
+    openAIApiKey: process.env.OPENAI_API_KEY,
+    modelName: "gpt-3.5-turbo",
+    // prefixMessages: history,
+    temperature: 0.7,
+    verbose: true,
+    cache: true,
+    // callbackManager: callbackManager,
+    // prefixMessages: [
+    //   { role: "user", content: "My name is John" },
+    //   { role: "assistant", content: "Hi there" },
+    // ],
+  });
 
   //Load in the file containing the content on which we will be performing Q&A
   //The answers to the questions are contained in this file
-  const text = fs.readFileSync("state_of_the_union.txt", "utf8");
 
   //Split the text from the Q&A content file into chunks
   //This is necessary because we can only pass text of a specifc size to LLMs.  
   //Since the size of the of the file containing the answers is larger than the max size
   //of the text that can be passed to an LLM, we split the the text in the file into chunks.
   //That is what the RecursiveCharacterTextSplitter is doing here
-  const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
+
+
 
   //Create documents from the split text as required by subsequent calls
-  const docs = await textSplitter.createDocuments([text]);
+  const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
+
+  // const text = fs.readFileSync("state_of_the_union.txt", "utf8");
+  // const docs = await textSplitter.createDocuments([text]);
+
+  const loader = new TextLoader("state_of_the_union.txt");
+
+  // const loader = new PDFLoader("src/document_loaders/example_data/example.pdf");
+  const docs = await loader.load();
+  // console.log({ docs });
+
 
   //Create the vector store from OpenAIEmbeddings
   //OpenAIEmbeddings is used to create a vector representation of a text in the documents.
@@ -95,10 +145,11 @@ export const run = async () => {
   //as explained earlier, the LLMs have a limit in size of the text that can be sent to them
   const res = await chain.call({
     input_documents: docs,
-    query: "What did the president say about the Cancer Moonshot?",
+    // query: "What did the president say about the Cancer Moonshot? answer me in zh_CN",
+    query: "What is this about? answer me in zh_CN",
   });
   console.log({ res });
 };
 run();
 
-*/
+
