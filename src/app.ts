@@ -95,6 +95,10 @@ import { ChatVectorDBQAChain } from "langchain/chains";
 import pdfParse from "pdf-parse"
 
 
+
+const log = function() { console.log(...arguments) };
+
+
 export const run = async () => {
 
   //Instantiante the OpenAI LLM that will be used to answer the question
